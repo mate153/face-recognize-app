@@ -1,11 +1,16 @@
 import { Container } from 'react-bootstrap';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Webcam from "./components/WebcamComponent.jsx";
 import Login from "./components/LoginComponent.jsx";
 import './App.css';
 
 function App() {
+  const [validEmail, setValidEmail] = useState(null);
+
+  const checkValidEmail = (email) => {
+    setValidEmail(email);
+  }
 
   useEffect(() => {
     const fetcingData = async() => {
@@ -20,9 +25,14 @@ function App() {
     fetcingData();
   }, [])
 
+  console.log(validEmail);
+
   return (
     <Container className='main-container bg-dark mt-auto d-flex justify-content-center align-items-center' fluid>
-      <Login />
+      {validEmail != null ? 
+      <Webcam />
+      :
+      <Login checkValidEmail={checkValidEmail} />}
     </Container>
   )
 }
