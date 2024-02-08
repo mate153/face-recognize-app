@@ -86,3 +86,7 @@
     color: #0099ff;
     font-size: 9px;
   }
+
+  .invalid-email {
+    border-color: red !important;
+  }
