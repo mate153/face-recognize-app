@@ -1,18 +1,35 @@
-.webcam-container{
-    max-width: 600px;
-    max-height: 450px;
-    border: 30px solid #8a2be2;
+.webcam-main-container{
+    max-height: 480px;
+    max-width: 640px;
+    border: 30px solid rgb(16, 137, 211);
     border-radius: 50px;
     overflow: hidden;
     padding: 0px;
 }
 
-.content > video {
-    width: 100%;
-    height: auto;
+.webcam-container{
+    height: 480px;
+    width: 640px;
+    font-family: monospace;
+    background-color: black;
+    color: white;
+    font-size: 16px;
+    line-height: 22px;
+    margin: 0;
+    overflow: hidden;
+    position: relative;
 }
 
-.content > img {
-    width: 100%;
-    height: auto;
+.video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+  }
+
+  .canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
 }
