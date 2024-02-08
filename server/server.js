@@ -9,6 +9,9 @@ const cors = require('cors');
 app.use(cors({origin:'http://localhost:5173'}));
 
 
-
+app.get('/api/test', function(req, res){
+    console.log("hello")
+    res.json("Hello work!");
+});
 
 app.listen(3153);
