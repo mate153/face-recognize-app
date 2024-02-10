@@ -7,34 +7,33 @@ import './App.css';
 
 function App() {
   const [validEmail, setValidEmail] = useState(null);
+  const [register, setRegister] = useState(false);
+  const [login, setLogin] = useState(false);
 
   const checkValidEmail = (email) => {
     setValidEmail(email);
   }
 
-  useEffect(() => {
-    const fetcingData = async() => {
-      try{
-        const res = await fetch('/api/test');
-        const data = await res.json();
-        console.log(data);
-      }catch (err){
-        console.log(err);
-      }
-    }
-    fetcingData();
-  }, [])
+  const checkRegister = (bool) => {
+    setRegister(bool);
+  }
 
-  console.log(validEmail);
+  const setLoginTrue = (bool) => {
+    setLogin(bool)
+  }
 
   return (
     <Container className='main-container bg-dark mt-auto d-flex justify-content-center align-items-center' fluid>
-      {validEmail != null ? 
-      <Webcam />
+      {validEmail != null ?
+      <section id='webcam-component'>
+        <Webcam register={register} setLoginTrue={setLoginTrue} login={login}/>
+      </section> 
       :
-      <Login checkValidEmail={checkValidEmail} />}
+      <section id='login-component'>
+        <Login checkValidEmail={checkValidEmail} register={register} checkRegister={checkRegister} />
+      </section>}
     </Container>
   )
-}
+};
 
-export default App
+export default App;
