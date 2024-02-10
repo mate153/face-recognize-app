@@ -3,8 +3,7 @@ import React from 'react'
 function WelcomeComponent() {
   return (
     <>
-      <div>WelcomeComponent</div>
-      <button href='login-comonent'>Quit</button>
+      <div style={{color: 'white'}}>Welcome</div>
     </>
   )
 }
