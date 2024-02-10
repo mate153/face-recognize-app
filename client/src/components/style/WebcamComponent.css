@@ -1,7 +1,6 @@
 .webcam-main-container{
-    max-height: 480px;
-    max-width: 640px;
-    border: 30px solid rgb(16, 137, 211);
+    max-height: auto;
+    max-width: 850px;
     border-radius: 50px;
     overflow: hidden;
     padding: 0px;
@@ -21,6 +20,8 @@
 }
 
 .video {
+    max-height: 480px;
+    max-width: auto;
     position: absolute;
     top: 0;
     left: 0;
@@ -28,8 +29,10 @@
   }
 
   .canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 10;
+    max-height: 480px;
+    max-width: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
 }
