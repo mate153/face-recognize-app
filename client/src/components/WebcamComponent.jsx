@@ -1,19 +1,24 @@
 import React, { useEffect, useRef, useState } from 'react';
-import * as faceapi from '../../dist/face-api.esm.js';
-import './style/WebcamComponent.css';
 import { Container } from 'react-bootstrap';
+import * as faceapi from '../../dist/face-api.esm.js';
+import Welcome from './WelcomeComponent.jsx';
+import Card from './Card.jsx';
+import './style/WebcamComponent.css';
 
-function Webcam({register, setLoginTrue, login}) {
+function Webcam({ register, setLoginTrue, login, setLoginOrWebcam }) {
   const modelPath = '../../model/';
   const minScore = 0.2;
   const maxResults = 5;
-  let optionsSSDMobileNet;
   const [isConditionMet, setIsConditionMet] = useState(false);
+  const [userValidate, setUserValidate] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const logRef = useRef(null);
-  const [reference, setReference] = useState(false);
-  let test = [];
+  //const logRef = useRef(null);
+  let optionsSSDMobileNet;
+  let descriptorsToRegistratiron = [];
+  let descriptorsFaceMatch = [];
+  let descriptorsFaceDontMatch = [];
 
   useEffect(() => {
     main();
@@ -59,14 +64,6 @@ function Webcam({register, setLoginTrue, login}) {
       ctx.fillText(`age: ${Math.round(person.age)} years`, person.detection.box.x, person.detection.box.y - 24);
       ctx.fillText(`roll:${person.angle.roll}° pitch:${person.angle.pitch}° yaw:${person.angle.yaw}°`, person.detection.box.x, person.detection.box.y - 6);
       // draw face points for each face
-      ctx.globalAlpha = 0.8;
-      ctx.fillStyle = 'lightblue';
-      const pointSize = 2;
-      for (let i = 0; i < person.landmarks.positions.length; i++) {
-        ctx.beginPath();
-        ctx.arc(person.landmarks.positions[i].x, person.landmarks.positions[i].y, pointSize, 0, 2 * Math.PI);
-        ctx.fill();
-      }
     }
   }
 
@@ -110,45 +107,55 @@ function Webcam({register, setLoginTrue, login}) {
 
   async function detectFaceDescriptor(video) {
     if (!video || video.paused) return false;
-    if(!reference){
-      try {
-        const singleResult = await faceapi
-          .detectSingleFace(video)
-          .withFaceLandmarks()
-          .withFaceDescriptor();
+    try {
+      const singleResult = await faceapi
+        .detectSingleFace(video)
+        .withFaceLandmarks()
+        .withFaceDescriptor();
 
-        const descriptor = singleResult.descriptor;
+      const descriptor = singleResult.descriptor;
 
-        if(test.length < 2) test.push(descriptor)
-
-        if (descriptor != null && register && test.length == 1) {
-          await sendDescriptorToServer(test);
-          setLoginTrue(true);
-        }
-
-        if(login) fetchTmpData(singleResult);
-
-        return true;
-      } catch (err) {
-        console.log(`Detect Error: ${String(err)}`);
-        return false;
+      if(descriptorsToRegistratiron.length < 3) descriptorsToRegistratiron.push(descriptor)
+      if (descriptor != null && register && descriptorsToRegistratiron.length == 1) {
+        await sendDescriptorToServer(descriptorsToRegistratiron);
+        setIsHidden(true);
       }
-    }
+      if((login && descriptorsFaceMatch.length < 2) && (login && descriptorsFaceDontMatch.length < 11)) fetchTmpData(singleResult);
+
+      return true;
+    } catch (err) {
+      console.log(`Detect Error: ${String(err)}`);
+      return false;
+    }    
   }
 
+  let lastFetchTime = 0;
+  const fetchCooldownTime = 3000;
+  
   async function fetchTmpData(singleResult){
-    console.log("here");
-    setReference(true);
     try {
-      const data = await fetch('/api/getDescriptor')
-      const res = await data.json()
+      const currentTime = Date.now();
+      if (currentTime - lastFetchTime < fetchCooldownTime) {
+        return;
+      }  
+      lastFetchTime = currentTime;
+  
+      const data = await fetch('/api/getDescriptor');
+      const res = await data.json();
 
       const propertyValues = Object.values(res[0]);
-      console.log(propertyValues);
-      const faceMatcher = new faceapi.FaceMatcher(singleResult)
-      const bestMatch = faceMatcher.findBestMatch(propertyValues)
-      console.log(bestMatch)  
-      console.log("hurra");
+      const faceMatcher = new faceapi.FaceMatcher(singleResult);
+      const bestMatch = faceMatcher.findBestMatch(propertyValues);
+  
+      if (bestMatch._label == 'person 1' && descriptorsFaceMatch.length < 2) {
+        setIsHidden(true);
+        setTimeout(() => {
+          setUserValidate(true); 
+          setIsHidden(false);
+        }, 5000);
+      } else if (descriptorsFaceDontMatch.length < 12) {
+        descriptorsFaceDontMatch.push(bestMatch);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -163,7 +170,6 @@ function Webcam({register, setLoginTrue, login}) {
       console.log('Camera Error: access not supported');
       return null;
     }
-
     let stream;
     const constraints = { audio: false, video: { facingMode: 'user', resizeMode: 'crop-and-scale' } };
 
@@ -184,7 +190,6 @@ function Webcam({register, setLoginTrue, login}) {
       console.log('Camera Error: stream empty');
       return null;
     }
-
     const track = stream.getVideoTracks()[0];
     const settings = track.getSettings();
 
@@ -235,14 +240,24 @@ function Webcam({register, setLoginTrue, login}) {
     await setupCamera();
   }
 
+  const handleSetIsHidden = (bool) => {
+    setIsHidden(bool)
+  }
+
   return (
-      <Container className='webcam-main-container' style={borderStyle}>
-        <div className='webcam-container'>
-          <video id="video" playsInline className="video" ref={videoRef}></video>
-          <canvas id="canvas" className="canvas" ref={canvasRef}></canvas>
-        </div>
-        <a href="#login-component">back</a>
-      </Container>
+    <>
+      <Card isHidden={isHidden} handleSetIsHidden={handleSetIsHidden} register={register} setLoginTrue={setLoginTrue} setLoginOrWebcam={setLoginOrWebcam}/>
+      {!userValidate ? (
+        <Container className='webcam-main-container' style={borderStyle}>
+          <div className='webcam-container'>
+            <video id="video" playsInline className="video" ref={videoRef}></video>
+            <canvas id="canvas" className="canvas" ref={canvasRef}></canvas>
+          </div>        
+        </Container>
+      ) : (
+        <Welcome/>
+      )}
+    </>
   );
 }
 
