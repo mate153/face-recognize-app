@@ -7,7 +7,7 @@ let userSchema = object({
   email: string().email().required()
 });
 
-function LoginComponent({checkValidEmail, register, checkRegister}) {
+function LoginComponent({ checkValidEmail, register, checkRegister, setLoginOrWebcam }) {
   const [email, setEmail] = useState('');
   const [touched, setTouched] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(false);
@@ -32,6 +32,7 @@ function LoginComponent({checkValidEmail, register, checkRegister}) {
     if (isEmailValid) {
       console.log('Form submitted');
       checkValidEmail(email);
+      setLoginOrWebcam(true);
     }
   };
 
