@@ -7,8 +7,7 @@ let userSchema = object({
   email: string().email().required()
 });
 
-function LoginComponent({checkValidEmail}) {
-  const [singUp, setSingup] = useState(false);
+function LoginComponent({checkValidEmail, register, checkRegister}) {
   const [email, setEmail] = useState('');
   const [touched, setTouched] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(false);
@@ -21,7 +20,6 @@ function LoginComponent({checkValidEmail}) {
     try {
       await userSchema.validate({ email });
       setIsEmailValid(true);
-      console.log('Email valid');
     } catch (err) {
       setIsEmailValid(false);
       console.error('Email not valid:', err.message);
@@ -37,8 +35,12 @@ function LoginComponent({checkValidEmail}) {
     }
   };
 
+  const handleButtonOnClick = (bool) => {
+    checkRegister(bool);
+  }
+
   return (
-    !singUp ? 
+    !register ? 
       <Container className='login-container'>
         <div className="heading">Sign In</div>
         <Form.Group controlId="email">
@@ -65,7 +67,7 @@ function LoginComponent({checkValidEmail}) {
           </Button>
         </Form>
         <div className="social-account-container">
-          <span className="title"><a href="#" onClick={() => setSingup(true)}>Or Sign up</a></span>
+          <span className="title"><a href="#" onClick={() => handleButtonOnClick(true)}>Or Sign up</a></span>
         </div>
         <span className="agreement"><a href="#">Learn user licence agreement</a></span>
       </Container>
@@ -96,7 +98,7 @@ function LoginComponent({checkValidEmail}) {
           </Button>
         </Form>
         <div className="social-account-container">
-          <span className="title"><a href="#" onClick={() => setSingup(false)}>Or Sign in</a></span>
+          <span className="title"><a href="#" onClick={() => handleButtonOnClick(false)}>Or Sign in</a></span>
         </div>
         <span className="agreement"><a href="#">Learn user licence agreement</a></span>
       </Container>    
