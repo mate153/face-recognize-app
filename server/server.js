@@ -3,6 +3,9 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
+//Face-api//
+const faceapi = require('face-api.js');
+
 //Cors//
 const cors = require('cors');
 app.use(cors({origin:'http://localhost:5173'}));
@@ -17,50 +20,74 @@ const db = new sqlite3.Database('./database/face-recognize-db.db', sqlite3.OPEN_
     }
 });
 
-let tmpDescriptor;
-
 app.post('/api/register', function(req, res){
     const email = req.body.validEmail;
     const descriptor = req.body.descriptor;
 
-    db.get('SELECT * FROM Users WHERE email = ?', [email], (err, row) => {
+    db.run('INSERT INTO Users (email, face_descriptors) VALUES (?, ?)', [email, JSON.stringify(descriptor)], (err) => {
         if (err) {
             console.error(err.message);
-            res.json({status: 500, message:"Server error"})            
-        }
-        if (row) {
-            res.json({status: 400, message:"The email address is already registered"})
-        } else {
-            db.run('INSERT INTO Users (email, face_descriptors) VALUES (?, ?)', [email, JSON.stringify(descriptor)], (err) => {
-                if (err) {
-                    console.error(err.message);
-                    res.json({status: 500, message:"Server error"})
-                }
-                res.json({status: 200, message:"Registration succesfull"})
-            });
-        }
+            res.json({status: 500, message:"Server error"});
+        };
+        res.json({status: 200, message:"Registration succesfull"});
     });
 });
 
-app.post('/api/loginDataValidate', function(req, res){
-    const email = req.body.email
-
+//Email validation//
+app.post('/api/validateRegisterData', function(req, res){
+    const email = req.body.email;
     db.get('SELECT * FROM Users WHERE email = ?', [email], (err, row) => {
         if (err) {
             console.error(err.message);
-            res.json({status: 500, message:"Server error"})            
+            res.json({status: 500, message:"Server error"});            
         }
         if (row) {
             res.json({status: 400, message:"The email address is already registered"});
         } else {
             res.json({status: 200, message:"The email accepted"});  
-        }
+        };
     });
+});
 
-})
+app.post('/api/validateLoginData', function(req, res){
+    const email = req.body.email;
+    db.get('SELECT * FROM Users WHERE email = ?', [email], (err, row) => {
+        if (err) {
+            console.error(err.message);
+            res.json({status: 500, message:"Server error"});            
+        };
+        if (!row) {
+            res.json({status: 400, message:"The email address is not registered! Please sign up!"});
+        } else {
+            res.json({status: 200, message:"The email registered"});
+        };
+    });
+});
 
-app.get('/api/getDescriptor', function(req, res){
-    res.json(tmpDescriptor);
-})
+app.post('/api/authenticate', (req, res) => {
+    const singleResult = req.body.singleResult;
+    const arrDescriptor = Float32Array.from(Object.values(singleResult.descriptor));
+    singleResult.descriptor = arrDescriptor;
+    const email = req.body.validEmail;  
+    db.get('SELECT * FROM Users WHERE email = ?', [email], (err, row) => {
+        if (err) {
+            console.error(err.message);
+            res.json({status: 500, message:"Server error"});           
+        };
+        if (row) {
+            const faceDescriptorToJson = JSON.parse(row.face_descriptors);
+            const faceDescriptorToArr = Float32Array.from(Object.values(faceDescriptorToJson[0]));
+            const faceMatcher = new faceapi.FaceMatcher(singleResult);
+            const bestMatch = faceMatcher.findBestMatch(faceDescriptorToArr);
+            if (bestMatch._label == 'person 1') {
+                res.json({status: 200, message:"Authentication Successful"});
+            }else {
+                res.json({status: 400, message:"Authentication Failed"});
+            };            
+        } else {
+            res.json({status: 400, message:"No such user"});  
+        };
+    });
+});
 
 app.listen(3153);
