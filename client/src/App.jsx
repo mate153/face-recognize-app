@@ -26,7 +26,7 @@ function App() {
   return (
     <Container className='main-container bg-dark mt-auto d-flex justify-content-center align-items-center' fluid>
       {loginOrWebcam ?
-      <Webcam register={register} setLoginTrue={setLoginTrue} login={login} setLoginOrWebcam={setLoginOrWebcam}/>
+      <Webcam register={register} setLoginTrue={setLoginTrue} login={login} setLoginOrWebcam={setLoginOrWebcam} validEmail={validEmail}/>
       :
       <Login checkValidEmail={checkValidEmail} register={register} checkRegister={checkRegister} setLoginOrWebcam={setLoginOrWebcam} />}
     </Container>
