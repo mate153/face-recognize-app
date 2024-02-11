@@ -1,7 +1,7 @@
 .cookieCard {
     width: 400px;
     height: 200px;
-    background: linear-gradient(to right, rgb(110, 112, 255), rgb(195, 196, 255));
+    background: linear-gradient(to right, rgb(16, 137, 211),  #ced5f5);
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -16,7 +16,7 @@
     width: 150px;
     height: 150px;
     content: "";
-    background: linear-gradient(to right,rgb(110, 112, 255),rgb(195, 196, 255));
+    background: linear-gradient(to right,rgb(16, 137, 211),  #eaedfa);
     position: absolute;
     z-index: 1;
     border-radius: 50%;
