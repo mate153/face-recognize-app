@@ -1,25 +1,52 @@
 import { Container, Form, Button } from 'react-bootstrap';
 import { object, string } from 'yup';
+import Swal from 'sweetalert2'
 import React, { useState } from 'react';
 import './style/LoginComponent.css';
-
-let userSchema = object({
-  email: string().email().required()
-});
 
 function LoginComponent({ checkValidEmail, register, checkRegister, setLoginOrWebcam }) {
   const [email, setEmail] = useState('');
   const [touched, setTouched] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(false);
 
+  let userSchema = object({
+    email: string().email().required()
+  });
+
   const handleFocus = () => {
     setTouched(true);
-  };
+  };  
 
   const validateEmail = async () => {
     try {
       await userSchema.validate({ email });
-      setIsEmailValid(true);
+      try {
+        const res = await fetch('/api/loginDataValidate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email })
+        })
+        const data = await res.json();
+
+        if(data.status === 200){
+          checkValidEmail(email);
+          setIsEmailValid(true);
+          console.log(data.message);
+        }else{
+          setIsEmailValid(false);
+          Swal.fire({
+            title: 'Error!',
+            text: data.message,
+            icon: 'error',
+            confirmButtonText: 'Ok'
+          });
+          console.log(data.message);
+        }
+      } catch (error) {
+        console.log(error);
+      } 
     } catch (err) {
       setIsEmailValid(false);
       console.error('Email not valid:', err.message);
@@ -31,7 +58,6 @@ function LoginComponent({ checkValidEmail, register, checkRegister, setLoginOrWe
     await validateEmail();
     if (isEmailValid) {
       console.log('Form submitted');
-      checkValidEmail(email);
       setLoginOrWebcam(true);
     }
   };
