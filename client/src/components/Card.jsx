@@ -1,13 +1,12 @@
 import React from 'react';
 import './style/Card.css';
 
-function Card({isHidden, handleSetIsHidden, register, setLoginTrue, setLoginOrWebcam}) {
+function Card({isHidden, handleSetIsHidden, register, setLoginOrWebcam}) {
 
     const handleBackButton = () => {
-        setLoginTrue(true);
         handleSetIsHidden(false);
         setLoginOrWebcam(false);
-    }
+    };
 
     return (
         <div className="cookieCard" style={{display: isHidden ? 'flex' : 'none'}}>
@@ -17,6 +16,6 @@ function Card({isHidden, handleSetIsHidden, register, setLoginTrue, setLoginOrWe
             {register && <button className="acceptButton" onClick={() => handleBackButton()}>Back to login</button>}
         </div>
       )
-}
+};
 
-export default Card
+export default Card;
