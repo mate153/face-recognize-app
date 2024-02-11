@@ -3,15 +3,17 @@ import { Container } from 'react-bootstrap';
 import * as faceapi from '../../dist/face-api.esm.js';
 import Welcome from './WelcomeComponent.jsx';
 import Card from './Card.jsx';
+import Loading from './Loading.jsx';
 import './style/WebcamComponent.css';
 
-function Webcam({ register, setLoginTrue, login, setLoginOrWebcam }) {
+function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail }) {
   const modelPath = '../../model/';
   const minScore = 0.2;
   const maxResults = 5;
   const [isConditionMet, setIsConditionMet] = useState(false);
   const [userValidate, setUserValidate] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
+  const [loading, setLoading] = useState(true);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   //const logRef = useRef(null);
@@ -47,7 +49,7 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam }) {
       ctx.globalAlpha = 1;
       // draw text labels
       const expression = Object.entries(person.expressions).sort((a, b) => b[1] - a[1]);
-      if(person.angle.yaw > -20 && person.angle.yaw < 20 && person.angle.pitch < 10 && person.angle.pitch > -2){
+      if(person.angle.yaw > -40 && person.angle.yaw < 40 && person.angle.pitch < 10 && person.angle.pitch > -2){
         setIsConditionMet(true)
         detectFaceDescriptor(video)
       } else {
@@ -88,18 +90,17 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam }) {
 
   async function sendDescriptorToServer(descriptor) {
     try {
-      const res = await fetch('/api/sendDescriptor', {
+      const res = await fetch('/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ descriptor })
+        body: JSON.stringify({ validEmail, descriptor })
       });
-  
-      if (!res.ok) {
-        throw new Error('Failed to send descriptor to the server');
-      }  
-      console.log('Descriptor sent successfully');
+      const data = await res.json();
+      console.log(data);  
+
+
     } catch (err) {
       console.log(`Fetch Error: ${err}`);
     }
@@ -140,9 +141,9 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam }) {
       }  
       lastFetchTime = currentTime;
   
-      const data = await fetch('/api/getDescriptor');
+      const data = await fetch('/api/login');
       const res = await data.json();
-
+      /*To server side !!*/
       const propertyValues = Object.values(res[0]);
       const faceMatcher = new faceapi.FaceMatcher(singleResult);
       const bestMatch = faceMatcher.findBestMatch(propertyValues);
@@ -215,6 +216,7 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam }) {
         video.play();
         detectVideo(video, canvas);
         resolve(true);
+        setLoading(false);
       };
     });
   }  
@@ -247,6 +249,7 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam }) {
   return (
     <>
       <Card isHidden={isHidden} handleSetIsHidden={handleSetIsHidden} register={register} setLoginTrue={setLoginTrue} setLoginOrWebcam={setLoginOrWebcam}/>
+      <Loading loading={loading}   />
       {!userValidate ? (
         <Container className='webcam-main-container' style={borderStyle}>
           <div className='webcam-container'>
