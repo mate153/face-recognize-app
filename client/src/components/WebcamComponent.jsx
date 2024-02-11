@@ -4,6 +4,7 @@ import * as faceapi from '../../dist/face-api.esm.js';
 import Welcome from './WelcomeComponent.jsx';
 import Card from './Card.jsx';
 import Loading from './Loading.jsx';
+import Swal from 'sweetalert2';
 import './style/WebcamComponent.css';
 
 function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail }) {
@@ -28,7 +29,7 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
 
   const borderStyle = {
     border: isConditionMet ? '20px solid green' : '20px solid red'
-  }
+  };
 
   function drawFaces(canvas, data, fps, video) {
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -54,7 +55,7 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
         detectFaceDescriptor(video)
       } else {
         setIsConditionMet(false)
-      }
+      };
       ctx.fillStyle = 'black';
       ctx.fillText(`gender: ${Math.round(100 * person.genderProbability)}% ${person.gender}`, person.detection.box.x, person.detection.box.y - 59);
       ctx.fillText(`expression: ${Math.round(100 * expression[0][1])}% ${expression[0][0]}`, person.detection.box.x, person.detection.box.y - 41);
@@ -65,9 +66,8 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
       ctx.fillText(`expression: ${Math.round(100 * expression[0][1])}% ${expression[0][0]}`, person.detection.box.x, person.detection.box.y - 42);
       ctx.fillText(`age: ${Math.round(person.age)} years`, person.detection.box.x, person.detection.box.y - 24);
       ctx.fillText(`roll:${person.angle.roll}° pitch:${person.angle.pitch}° yaw:${person.angle.yaw}°`, person.detection.box.x, person.detection.box.y - 6);
-      // draw face points for each face
-    }
-  }
+    };
+  };
 
   async function detectVideo(video, canvas) {
     if (!video || video.paused) return false;
@@ -85,26 +85,33 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
     } catch (err) {
       console.log(`Detect Error: ${String(err)}`);
       return false;
-    }
-  }
+    };
+  };
 
-  async function sendDescriptorToServer(descriptor) {
+  async function sendRegisterData(descriptor) {
     try {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ validEmail, descriptor })
+        body: JSON.stringify({ descriptor })
       });
       const data = await res.json();
-      console.log(data);  
 
-
+      if (data.status === 200) {
+        Swal.fire({
+          position: "center",
+          icon: "success",
+          title: data.message,
+          showConfirmButton: false,
+          timer: 4000
+        });
+      };
     } catch (err) {
       console.log(`Fetch Error: ${err}`);
-    }
-  }
+    };
+  };
 
   async function detectFaceDescriptor(video) {
     if (!video || video.paused) return false;
@@ -118,49 +125,65 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
 
       if(descriptorsToRegistratiron.length < 3) descriptorsToRegistratiron.push(descriptor)
       if (descriptor != null && register && descriptorsToRegistratiron.length == 1) {
-        await sendDescriptorToServer(descriptorsToRegistratiron);
+        await sendRegisterData(descriptorsToRegistratiron);
         setIsHidden(true);
-      }
-      if((login && descriptorsFaceMatch.length < 2) && (login && descriptorsFaceDontMatch.length < 11)) fetchTmpData(singleResult);
+      };
+      if((login && descriptorsFaceMatch.length < 2) && (login && descriptorsFaceDontMatch.length < 11)) fetchToAuthenticate(singleResult);
 
       return true;
     } catch (err) {
       console.log(`Detect Error: ${String(err)}`);
       return false;
-    }    
-  }
-
-  let lastFetchTime = 0;
-  const fetchCooldownTime = 3000;
+    };    
+  };
   
-  async function fetchTmpData(singleResult){
+  async function fetchToAuthenticate(singleResult){
     try {
       const currentTime = Date.now();
+      const fetchCooldownTime = 3000;
+      let lastFetchTime = 0;
+
       if (currentTime - lastFetchTime < fetchCooldownTime) {
         return;
-      }  
+      }; 
       lastFetchTime = currentTime;
+
+      const res = await fetch('/api/authenticate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ singleResult, validEmail })
+      });
+      const data = await res.json();
+
+      if (data.status === 200) {
+        setUserValidate(true);
+        Swal.fire({
+          position: "center",
+          icon: "success",
+          title: data.message,
+          showConfirmButton: false,
+          timer: 5000
+        });
+      };
   
-      const data = await fetch('/api/login');
-      const res = await data.json();
-      /*To server side !!*/
-      const propertyValues = Object.values(res[0]);
-      const faceMatcher = new faceapi.FaceMatcher(singleResult);
-      const bestMatch = faceMatcher.findBestMatch(propertyValues);
-  
+      /*      
       if (bestMatch._label == 'person 1' && descriptorsFaceMatch.length < 2) {
         setIsHidden(true);
         setTimeout(() => {
           setUserValidate(true); 
           setIsHidden(false);
-        }, 5000);
+        }, 5000);        
       } else if (descriptorsFaceDontMatch.length < 12) {
         descriptorsFaceDontMatch.push(bestMatch);
-      }
+      };
+      */
+
     } catch (error) {
       console.log(error);
-    }
-  }
+    };
+  };
 
   async function setupCamera() {
     const video = document.getElementById('video');
@@ -170,7 +193,7 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
     if (!navigator.mediaDevices) {
       console.log('Camera Error: access not supported');
       return null;
-    }
+    };
     let stream;
     const constraints = { audio: false, video: { facingMode: 'user', resizeMode: 'crop-and-scale' } };
 
@@ -205,8 +228,8 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
           detectVideo(video, canvas);
         } else {
           video.pause();
-        }
-      }
+        };
+      };
     });
 
     return new Promise((resolve) => {
@@ -219,7 +242,7 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
         setLoading(false);
       };
     });
-  }  
+  };  
 
   async function setupFaceAPI() {
     await faceapi.nets.ssdMobilenetv1.load(modelPath);
@@ -228,7 +251,7 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
     await faceapi.nets.faceRecognitionNet.load(modelPath);
     await faceapi.nets.faceExpressionNet.load(modelPath);
     optionsSSDMobileNet = new faceapi.SsdMobilenetv1Options({ minConfidence: minScore, maxResults });
-  }
+  };
 
   async function main() {
     await faceapi.tf.setBackend('webgl');
@@ -243,8 +266,8 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
   }
 
   const handleSetIsHidden = (bool) => {
-    setIsHidden(bool)
-  }
+    setIsHidden(bool);
+  };
 
   return (
     <>
@@ -262,6 +285,6 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
       )}
     </>
   );
-}
+};
 
 export default Webcam;
