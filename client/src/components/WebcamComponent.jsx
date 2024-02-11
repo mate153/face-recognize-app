@@ -95,7 +95,7 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ descriptor })
+        body: JSON.stringify({ validEmail, descriptor })
       });
       const data = await res.json();
 
