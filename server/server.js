@@ -36,11 +36,28 @@ app.post('/api/register', function(req, res){
                     console.error(err.message);
                     res.json({status: 500, message:"Server error"})
                 }
-                res.json({status: 200, message:"everything ok"})
+                res.json({status: 200, message:"Registration succesfull"})
             });
         }
     });
 });
+
+app.post('/api/loginDataValidate', function(req, res){
+    const email = req.body.email
+
+    db.get('SELECT * FROM Users WHERE email = ?', [email], (err, row) => {
+        if (err) {
+            console.error(err.message);
+            res.json({status: 500, message:"Server error"})            
+        }
+        if (row) {
+            res.json({status: 400, message:"The email address is already registered"});
+        } else {
+            res.json({status: 200, message:"The email accepted"});  
+        }
+    });
+
+})
 
 app.get('/api/getDescriptor', function(req, res){
     res.json(tmpDescriptor);
