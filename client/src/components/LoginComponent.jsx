@@ -1,10 +1,10 @@
 import { Container, Form, Button } from 'react-bootstrap';
 import { object, string } from 'yup';
-import Swal from 'sweetalert2'
 import React, { useState } from 'react';
+import Swal from 'sweetalert2';
 import './style/LoginComponent.css';
 
-function LoginComponent({ checkValidEmail, register, checkRegister, setLoginOrWebcam }) {
+function LoginComponent({ checkValidEmail, register, checkRegister, setLoginOrWebcam, setLoginTrue }) {
   const [email, setEmail] = useState('');
   const [touched, setTouched] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(false);
@@ -20,37 +20,64 @@ function LoginComponent({ checkValidEmail, register, checkRegister, setLoginOrWe
   const validateEmail = async () => {
     try {
       await userSchema.validate({ email });
-      try {
-        const res = await fetch('/api/loginDataValidate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email })
-        })
-        const data = await res.json();
-
-        if(data.status === 200){
-          checkValidEmail(email);
-          setIsEmailValid(true);
-          console.log(data.message);
-        }else{
-          setIsEmailValid(false);
-          Swal.fire({
-            title: 'Error!',
-            text: data.message,
-            icon: 'error',
-            confirmButtonText: 'Ok'
+      if (register) {
+        try {
+          const res = await fetch('/api/validateRegisterData', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
           });
-          console.log(data.message);
-        }
-      } catch (error) {
-        console.log(error);
-      } 
+          const data = await res.json();
+            
+          if(data.status === 200){
+            checkValidEmail(email);
+            setIsEmailValid(true);
+          }else{
+            setIsEmailValid(false);
+            Swal.fire({
+              title: 'Error!',
+              text: data.message,
+              icon: 'error',
+              confirmButtonText: 'Ok'
+            });
+          };
+        } catch (error) {
+          console.log(error);
+        };
+      }else {
+        try {
+          const res = await fetch('/api/validateLoginData', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
+          });
+          const data = await res.json();
+  
+          if(data.status === 200){
+            checkValidEmail(email);
+            setIsEmailValid(true);
+            setLoginTrue(true);
+          }else{
+            setIsEmailValid(false);
+            Swal.fire({
+              title: 'Error!',
+              text: data.message,
+              icon: 'error',
+              confirmButtonText: 'Ok'
+            });
+          };
+        } catch (error) {
+          console.log(error);
+        };
+      };
     } catch (err) {
       setIsEmailValid(false);
       console.error('Email not valid:', err.message);
-    }
+    };
   };
 
   const handleSubmit = async (e) => {
@@ -59,12 +86,12 @@ function LoginComponent({ checkValidEmail, register, checkRegister, setLoginOrWe
     if (isEmailValid) {
       console.log('Form submitted');
       setLoginOrWebcam(true);
-    }
+    };
   };
 
   const handleButtonOnClick = (bool) => {
     checkRegister(bool);
-  }
+  };
 
   return (
     !register ? 
