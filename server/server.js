@@ -82,7 +82,7 @@ app.post('/api/authenticate', (req, res) => {
             if (bestMatch._label == 'person 1') {
                 res.json({status: 200, message:"Authentication Successful"});
             }else {
-                res.json({status: 400, message:"Authentication Failed"});
+                res.json({status: 400, message:"No Matching!"});
             };            
         } else {
             res.json({status: 400, message:"No such user"});  
