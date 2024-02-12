@@ -3,22 +3,40 @@ import { Container } from 'react-bootstrap';
 import * as faceapi from '../../dist/face-api.esm.js';
 import Welcome from './WelcomeComponent.jsx';
 import Loading from './Loading.jsx';
+import Slider from './Slider.jsx';
+import Message from './Message.jsx';
 import Swal from 'sweetalert2';
 import './style/WebcamComponent.css';
 
 function Webcam({ register, login, setLoginOrWebcam, validEmail }) {
+  //Face-api//
   const modelPath = '../../model/';
   const minScore = 0.2;
-  const maxResults = 5;
-  const [isConditionMet, setIsConditionMet] = useState(false);
-  const [userValidate, setUserValidate] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const maxResults = 5;  
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  //const logRef = useRef(null);
   let optionsSSDMobileNet;
+
+  //Head posture//
+  const [isConditionMet, setIsConditionMet] = useState(false);
+  const [currentYaw, setCurrentYaw] = useState(null);
+
+  //Authenticate//
+  const [userValidate, setUserValidate] = useState(false);
+  let lastFetchtoAuthenticateTime = 0;
   let descriptorsToRegistratiron = [];
   let descriptorsFaceDontMatch = [];
+
+  //Loading//
+  const [loading, setLoading] = useState(true);
+
+  //Timer//
+  let counter = 3;
+  let timer;
+
+  //Message//
+  const [showMessage, setShowMessage] = useState(false);
+  const [messageCurrentText, setMessageCurrentText] = useState("");
 
   useEffect(() => {
     main();
@@ -27,7 +45,7 @@ function Webcam({ register, login, setLoginOrWebcam, validEmail }) {
   const borderStyle = {
     border: isConditionMet ? '20px solid green' : '20px solid red'
   };
-
+  
   function drawFaces(canvas, data, fps, video) {
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
@@ -47,12 +65,34 @@ function Webcam({ register, login, setLoginOrWebcam, validEmail }) {
       ctx.globalAlpha = 1;
       // draw text labels
       const expression = Object.entries(person.expressions).sort((a, b) => b[1] - a[1]);
-      if(person.angle.yaw > -40 && person.angle.yaw < 40 && person.angle.pitch < 10 && person.angle.pitch > -2){
+      setCurrentYaw(person.angle.yaw);
+      
+      if (person.angle.yaw > -40 && person.angle.yaw < 40 && person.angle.pitch < 11 && person.angle.pitch > -4) {
         setIsConditionMet(true);
-        detectFaceDescriptor(video);
+        if (register) {
+          if (!timer) {
+            timer = setInterval(() => {
+              if (counter === 0) {
+                detectFaceDescriptor(video);
+                counter = 3;
+              } else {
+                counter--;
+              };
+            }, 1000);
+          };
+          setMessageCurrentText(`Good! Please Wait! ${counter}..`);
+          setShowMessage(true);
+        } else {
+          detectFaceDescriptor(video);
+          setMessageCurrentText("Searching...");
+          setShowMessage(true);
+        };
       } else {
-        setIsConditionMet(false);
-      };
+        counter = 3;
+        setIsConditionMet(false);          
+        setMessageCurrentText("Please face the camera until the frame turns green!");
+        setShowMessage(true);
+      };  
       ctx.fillStyle = 'black';
       ctx.fillText(`gender: ${Math.round(100 * person.genderProbability)}% ${person.gender}`, person.detection.box.x, person.detection.box.y - 59);
       ctx.fillText(`expression: ${Math.round(100 * expression[0][1])}% ${expression[0][0]}`, person.detection.box.x, person.detection.box.y - 41);
@@ -86,7 +126,7 @@ function Webcam({ register, login, setLoginOrWebcam, validEmail }) {
   };
 
   async function sendRegisterData(descriptor) {
-    try {
+    try{
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: {
@@ -95,18 +135,18 @@ function Webcam({ register, login, setLoginOrWebcam, validEmail }) {
         body: JSON.stringify({ validEmail, descriptor })
       });
       const data = await res.json();
-
+  
       if (data.status === 200) {
+        setShowMessage(false);
         Swal.fire({
           position: "center",
           icon: "success",
           title: data.message,
           showConfirmButton: false,
-          timer: 3000
+          timer: 4000,
+          timerProgressBar: true
         });
-        setTimeout(() => {
-          setLoginOrWebcam(false);
-        }, 2000);
+        setLoginOrWebcam(false);
       };
     } catch (err) {
       console.log(`Fetch Error: ${err}`);
@@ -123,32 +163,29 @@ function Webcam({ register, login, setLoginOrWebcam, validEmail }) {
 
       const descriptor = singleResult.descriptor;
 
-      if(descriptorsToRegistratiron.length < 3) descriptorsToRegistratiron.push(descriptor)
+      if(descriptorsToRegistratiron.length < 2) descriptorsToRegistratiron.push(descriptor)
       if (descriptor != null && register && descriptorsToRegistratiron.length == 1) {
         await sendRegisterData(descriptorsToRegistratiron);
       };
-      if(login){
+      if(login && !register){
         fetchToAuthenticate(singleResult);
-      } 
-
+      };
       return true;
     } catch (err) {
       console.log(`Detect Error: ${String(err)}`);
       return false;
     };    
   };
-  
-  let lastFetchTime = 0;
 
   async function fetchToAuthenticate(singleResult){
     try {
       const currentTime = Date.now();
       const fetchCooldownTime = 3000;
 
-      if (currentTime - lastFetchTime < fetchCooldownTime) {
+      if (currentTime - lastFetchtoAuthenticateTime < fetchCooldownTime) {
         return;
       }; 
-      lastFetchTime = currentTime;
+      lastFetchtoAuthenticateTime = currentTime;
 
       const res = await fetch('/api/authenticate', {
         method: 'POST',
@@ -160,28 +197,30 @@ function Webcam({ register, login, setLoginOrWebcam, validEmail }) {
       const data = await res.json();
 
       if (data.status === 200) {
+        setShowMessage(false);
         setUserValidate(true);
         Swal.fire({
           position: "center",
           icon: "success",
           title: data.message,
           showConfirmButton: false,
-          timer: 4000
+          timer: 3500,
+          timerProgressBar: true
         });
       }else {
         if (descriptorsFaceDontMatch.length < 5) {
           descriptorsFaceDontMatch.push(data);
         } else{
+          setShowMessage(false);
           Swal.fire({
             position: "center",
             icon: "error",
             title: data.message,
             showConfirmButton: false,
-            timer: 4000
+            timer: 4000,
+            timerProgressBar: true
           });
-          setTimeout(() => {
-            setLoginOrWebcam(false);
-          }, 3000);
+          setLoginOrWebcam(false);
         };
       };
     } catch (error) {
@@ -267,18 +306,22 @@ function Webcam({ register, login, setLoginOrWebcam, validEmail }) {
 
     await setupFaceAPI();
     await setupCamera();
-  }
+  };
 
   return (
-    <>
-      <Loading loading={loading} />
+    <>      
       {!userValidate ? (
-        <Container className='webcam-main-container' style={borderStyle}>
-          <div className='webcam-container'>
-            <video id="video" playsInline className="video" ref={videoRef}></video>
-            <canvas id="canvas" className="canvas" ref={canvasRef}></canvas>
-          </div>        
-        </Container>
+        <>
+          <Message messageCurrentText={messageCurrentText} showMessage={showMessage} />
+          <Loading loading={loading} />
+          <Container className='webcam-main-container' style={borderStyle}>          
+            <div className='webcam-container'>
+              <video id="video" playsInline className="video" ref={videoRef}></video>
+              <canvas id="canvas" className="canvas" ref={canvasRef}></canvas>
+            </div>      
+          </Container>
+          <Slider currentYaw={currentYaw} />
+        </>
       ) : (
         <Welcome />
       )}
