@@ -9,9 +9,9 @@ The project is a mini application that performs a face recognition-based registr
 ## Technologies Used
 
 - **Face Recognition Framework:** `face-api.js`
-- **Frontend:** React.js
-- **Backend:** Express.js
-- **Database:** SQLite
+- **Frontend:** `React.js`
+- **Backend:** `Express.js`
+- **Database:** `SQLite`
 
 ## Getting Started
 
@@ -23,7 +23,7 @@ To get started with this project, follow these steps:
 git clone https://github.com/mate153/face-recognize-app.git
 ```
 
-2. Open two terminal windows and navigate to the project directory in both:
+2. Open two terminal windows and navigate to the project directory in both, if you are not there:
 
 ```bash
 cd face-recognize-app
@@ -31,14 +31,14 @@ cd face-recognize-app
 
 3. Install dependencies:
 
-In one terminal window, navigate to the client folder and install dependencies
+ In one terminal window, navigate to the client folder and install dependencies
 
 ```bash
 cd client
 npm install
 ```
 
-In the other terminal window, navigate to the server folder and install dependencies:
+ In the other terminal window, navigate to the server folder and install dependencies:
 
 ```bash
 cd server
@@ -47,12 +47,12 @@ npm install
 
 4. Start the frontend and backend servers:
 
-Start the backend server
+ Start the backend server
 ```bash
 npm run dev
 ```
 
-Start the frontend server
+ Start the frontend server
 ```bash
 npm run dev
 ```
