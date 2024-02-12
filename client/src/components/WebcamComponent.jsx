@@ -2,25 +2,22 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Container } from 'react-bootstrap';
 import * as faceapi from '../../dist/face-api.esm.js';
 import Welcome from './WelcomeComponent.jsx';
-import Card from './Card.jsx';
 import Loading from './Loading.jsx';
 import Swal from 'sweetalert2';
 import './style/WebcamComponent.css';
 
-function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail }) {
+function Webcam({ register, login, setLoginOrWebcam, validEmail }) {
   const modelPath = '../../model/';
   const minScore = 0.2;
   const maxResults = 5;
   const [isConditionMet, setIsConditionMet] = useState(false);
   const [userValidate, setUserValidate] = useState(false);
-  const [isHidden, setIsHidden] = useState(false);
   const [loading, setLoading] = useState(true);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   //const logRef = useRef(null);
   let optionsSSDMobileNet;
   let descriptorsToRegistratiron = [];
-  let descriptorsFaceMatch = [];
   let descriptorsFaceDontMatch = [];
 
   useEffect(() => {
@@ -51,10 +48,10 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
       // draw text labels
       const expression = Object.entries(person.expressions).sort((a, b) => b[1] - a[1]);
       if(person.angle.yaw > -40 && person.angle.yaw < 40 && person.angle.pitch < 10 && person.angle.pitch > -2){
-        setIsConditionMet(true)
-        detectFaceDescriptor(video)
+        setIsConditionMet(true);
+        detectFaceDescriptor(video);
       } else {
-        setIsConditionMet(false)
+        setIsConditionMet(false);
       };
       ctx.fillStyle = 'black';
       ctx.fillText(`gender: ${Math.round(100 * person.genderProbability)}% ${person.gender}`, person.detection.box.x, person.detection.box.y - 59);
@@ -105,8 +102,11 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
           icon: "success",
           title: data.message,
           showConfirmButton: false,
-          timer: 4000
+          timer: 3000
         });
+        setTimeout(() => {
+          setLoginOrWebcam(false);
+        }, 2000);
       };
     } catch (err) {
       console.log(`Fetch Error: ${err}`);
@@ -126,9 +126,10 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
       if(descriptorsToRegistratiron.length < 3) descriptorsToRegistratiron.push(descriptor)
       if (descriptor != null && register && descriptorsToRegistratiron.length == 1) {
         await sendRegisterData(descriptorsToRegistratiron);
-        setIsHidden(true);
       };
-      if((login && descriptorsFaceMatch.length < 2) && (login && descriptorsFaceDontMatch.length < 11)) fetchToAuthenticate(singleResult);
+      if(login){
+        fetchToAuthenticate(singleResult);
+      } 
 
       return true;
     } catch (err) {
@@ -137,11 +138,12 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
     };    
   };
   
+  let lastFetchTime = 0;
+
   async function fetchToAuthenticate(singleResult){
     try {
       const currentTime = Date.now();
       const fetchCooldownTime = 3000;
-      let lastFetchTime = 0;
 
       if (currentTime - lastFetchTime < fetchCooldownTime) {
         return;
@@ -164,22 +166,24 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
           icon: "success",
           title: data.message,
           showConfirmButton: false,
-          timer: 5000
+          timer: 4000
         });
+      }else {
+        if (descriptorsFaceDontMatch.length < 5) {
+          descriptorsFaceDontMatch.push(data);
+        } else{
+          Swal.fire({
+            position: "center",
+            icon: "error",
+            title: data.message,
+            showConfirmButton: false,
+            timer: 4000
+          });
+          setTimeout(() => {
+            setLoginOrWebcam(false);
+          }, 3000);
+        };
       };
-  
-      /*      
-      if (bestMatch._label == 'person 1' && descriptorsFaceMatch.length < 2) {
-        setIsHidden(true);
-        setTimeout(() => {
-          setUserValidate(true); 
-          setIsHidden(false);
-        }, 5000);        
-      } else if (descriptorsFaceDontMatch.length < 12) {
-        descriptorsFaceDontMatch.push(bestMatch);
-      };
-      */
-
     } catch (error) {
       console.log(error);
     };
@@ -265,14 +269,9 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
     await setupCamera();
   }
 
-  const handleSetIsHidden = (bool) => {
-    setIsHidden(bool);
-  };
-
   return (
     <>
-      <Card isHidden={isHidden} handleSetIsHidden={handleSetIsHidden} register={register} setLoginTrue={setLoginTrue} setLoginOrWebcam={setLoginOrWebcam}/>
-      <Loading loading={loading}   />
+      <Loading loading={loading} />
       {!userValidate ? (
         <Container className='webcam-main-container' style={borderStyle}>
           <div className='webcam-container'>
@@ -281,7 +280,7 @@ function Webcam({ register, setLoginTrue, login, setLoginOrWebcam, validEmail })
           </div>        
         </Container>
       ) : (
-        <Welcome/>
+        <Welcome />
       )}
     </>
   );
