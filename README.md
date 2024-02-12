@@ -21,13 +21,13 @@ To get started with this project, follow these steps:
 
 ```bash
 git clone https://github.com/mate153/face-recognize-app.git
-```bash
+```
 
 2. Open two terminal windows and navigate to the project directory in both:
 
 ```bash
 cd face-recognize-app
-```bash
+```
 
 3. Install dependencies:
 
@@ -36,26 +36,26 @@ In one terminal window, navigate to the client folder and install dependencies
 ```bash
 cd client
 npm install
-```bash
+```
 
 In the other terminal window, navigate to the server folder and install dependencies:
 
 ```bash
 cd server
 npm install
-```bash
+```
 
 4. Start the frontend and backend servers:
 
 Start the backend server
 ```bash
 npm run dev
-```bash
+```
 
 Start the frontend server
 ```bash
 npm run dev
-```bash
+```
 
 5. Access the application in your browser at `http://localhost:5173`.
 
