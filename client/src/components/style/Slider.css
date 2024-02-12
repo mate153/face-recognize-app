@@ -1,0 +1,9 @@
+.slider-container{
+    position: absolute;
+    bottom: 15%;
+    color: #ffffff;
+}
+
+.slider-container > input {
+    width: 40%;
+}
