@@ -1,5 +1,5 @@
 .login-container {
-    max-width: 350px;
+    max-width: 350px !important;
     background: #9194a1;
     background: linear-gradient(0deg, rgb(212, 212, 212) 0%, rgb(244, 247, 251) 100%);
     border-radius: 40px;
