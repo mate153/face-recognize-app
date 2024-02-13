@@ -4,7 +4,7 @@ This is a solo project I've been working on, aimed at developing a face recognit
 
 ## Overview
 
-The project is a mini application that performs a face recognition-based registration and login process. It utilizes the `face-api.js` framework with TensorFlow.js for face recognition, React for the frontend, Express for the backend, and SQLite for the database. This setup allows anyone to clone the repository, install dependencies, and run the application locally for testing purposes.
+The app utilizes the face-api.js framework for face recognition, React for the frontend, Express for the backend, and SQLite for the database. This setup allows anyone to clone the repository, install dependencies, and run the application locally for testing purposes.
 
 ## Technologies Used
 
